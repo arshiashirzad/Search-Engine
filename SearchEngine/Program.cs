@@ -1,7 +1,15 @@
+using SearchEngine.Interfaces;
+using SearchEngine.Repositories;
+using SearchEngine.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddSingleton<IDocumentRepository, DocumentRepository>();
+builder.Services.AddSingleton<ITokenizer, Tokenizer>();
+builder.Services.AddSingleton<IInvertedIndex, InvertedIndex>();
+builder.Services.AddSingleton<ISearchEngineService, SearchEngineService>();
 
 var app = builder.Build();
 
@@ -22,7 +30,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Search}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 
