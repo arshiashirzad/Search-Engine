@@ -1,4 +1,7 @@
 using SearchEngine.Interfaces;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 
 namespace SearchEngine.Services;
 
@@ -37,13 +40,18 @@ public class FileStorageService : IFileStorageService
 
         var extension = Path.GetExtension(filePath).ToLower();
 
-        if (extension == ".txt" || extension == ".md" || extension == ".doc" || extension == ".docx")
+        if (extension == ".txt" || extension == ".md")
         {
             return await File.ReadAllTextAsync(filePath);
         }
         else if (extension == ".pdf")
         {
-            return "[PDF files are not supported for content extraction. Please upload .txt or .md files instead]";
+            return await ExtractPdfTextAsync(filePath);
+        }
+        else if (extension == ".doc" || extension == ".docx")
+        {
+            // Word documents require DocumentFormat.OpenXml library
+            return "[Word documents (.doc/.docx) are not yet supported. Please convert to .txt or .pdf]";
         }
         else
         {
@@ -55,6 +63,32 @@ public class FileStorageService : IFileStorageService
             {
                 return "[Unable to read file content]";
             }
+        }
+    }
+
+    private async Task<string> ExtractPdfTextAsync(string filePath)
+    {
+        try
+        {
+            using (var pdfReader = new PdfReader(filePath))
+            using (var pdfDocument = new PdfDocument(pdfReader))
+            {
+                var text = new System.Text.StringBuilder();
+                
+                for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                {
+                    var page = pdfDocument.GetPage(i);
+                    var strategy = new SimpleTextExtractionStrategy();
+                    var pageText = PdfTextExtractor.GetTextFromPage(page, strategy);
+                    text.AppendLine(pageText);
+                }
+                
+                return text.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"[Error extracting PDF content: {ex.Message}]";
         }
     }
 

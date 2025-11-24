@@ -46,31 +46,36 @@ public class DocumentController : Controller
             
             if (extension == ".txt" || extension == ".md")
             {
+                // Read text files directly from upload stream
                 using (var reader = new StreamReader(file.OpenReadStream()))
                 {
                     document.Content = await reader.ReadToEndAsync();
                 }
+                document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
             }
             else if (extension == ".pdf")
             {
-                document.Content = "[PDF files not supported. Please convert to .txt first]";
+                // For PDFs, save file first then extract text
+                document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
+                document.Content = await _fileStorageService.ReadFileContentAsync(document.FilePath);
             }
             else
             {
+                // Try to read other file types
                 try
                 {
                     using (var reader = new StreamReader(file.OpenReadStream()))
                     {
                         document.Content = await reader.ReadToEndAsync();
                     }
+                    document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
                 }
                 catch
                 {
                     document.Content = "[Unable to read file content]";
+                    document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
                 }
             }
-
-            document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
             
             if (string.IsNullOrWhiteSpace(document.Title))
             {
