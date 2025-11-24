@@ -3,155 +3,48 @@
     ViewData["Title"] = "Document Details";
 }
 
-<style>
-    .detail-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        overflow: hidden;
-    }
-    
-    .detail-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 40px;
-    }
-    
-    .detail-body {
-        padding: 40px;
-    }
-    
-    .detail-label {
-        color: #667eea;
-        font-weight: 600;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-    }
-    
-    .detail-value {
-        font-size: 16px;
-        margin-bottom: 25px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 10px;
-    }
-    
-    .content-box {
-        background: #ffffff;
-        border: 2px solid #e9ecef;
-        border-radius: 10px;
-        padding: 25px;
-        white-space: pre-wrap;
-        font-family: 'Courier New', monospace;
-        max-height: 500px;
-        overflow-y: auto;
-    }
-    
-    .action-footer {
-        padding: 30px 40px;
-        background: #f8f9fa;
-        border-top: 2px solid #e9ecef;
-    }
-</style>
-
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="mb-4">
-                <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
-                    ← Back to Documents
-                </a>
+        <div class="col-md-8">
+            <div class="mb-3">
+                <a href="@Url.Action("Index")" class="btn btn-secondary">← Back</a>
             </div>
 
-            <div class="detail-card">
-                <div class="detail-header">
-                    <h1 class="mb-0">
-                        @if (!string.IsNullOrEmpty(Model.FileName))
-                        {
-                            <span>📄 </span>
-                        }
-                        @Model.Title
-                    </h1>
+            <div class="card">
+                <div class="card-header">
+                    <h3>@Model.Title</h3>
                 </div>
-                
-                <div class="detail-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-label">📌 Document ID</div>
-                            <div class="detail-value">
-                                <code>@Model.Id</code>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="detail-label">⏰ Date Added</div>
-                            <div class="detail-value">
-                                @Model.DateAdded.ToLocalTime().ToString("MMMM dd, yyyy 'at' HH:mm")
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-label">📊 Status</div>
-                            <div class="detail-value">
-                                @if (Model.IsIndexed)
-                                {
-                                    <span class="badge bg-success" style="font-size: 16px; padding: 8px 16px;">
-                                        ✓ Indexed
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary" style="font-size: 16px; padding: 8px 16px;">
-                                        ○ Not Indexed
-                                    </span>
-                                }
-                            </div>
-                        </div>
-
-                        @if (!string.IsNullOrEmpty(Model.FileName))
+                <div class="card-body">
+                    <p><strong>ID:</strong> <code>@Model.Id</code></p>
+                    <p><strong>Status:</strong> 
+                        @if (Model.IsIndexed)
                         {
-                            <div class="col-md-6">
-                                <div class="detail-label">📎 File Information</div>
-                                <div class="detail-value">
-                                    <strong>@Model.FileName</strong><br/>
-                                    <small class="text-muted">Size: @FormatFileSize(Model.FileSize)</small>
-                                </div>
-                            </div>
+                            <span class="badge bg-success">Indexed</span>
                         }
-                    </div>
-
-                    <div class="detail-label">📝 Content</div>
-                    <div class="content-box">@Model.Content</div>
+                        else
+                        {
+                            <span class="badge bg-secondary">Not Indexed</span>
+                        }
+                    </p>
+                    <p><strong>Date Added:</strong> @Model.DateAdded.ToLocalTime().ToString("F")</p>
+                    @if (!string.IsNullOrEmpty(Model.FileName))
+                    {
+                        <p><strong>File:</strong> @Model.FileName (@FormatFileSize(Model.FileSize))</p>
+                    }
+                    <hr/>
+                    <p><strong>Content:</strong></p>
+                    <div class="bg-light p-3 rounded" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto;">@Model.Content</div>
                 </div>
-                
-                <div class="action-footer">
-                    <div class="d-flex gap-2 justify-content-between">
-                        <div>
-                            @if (!Model.IsIndexed)
-                            {
-                                <form method="post" asp-controller="Document" asp-action="IndexDocument" asp-route-id="@Model.Id" class="d-inline">
-                                    <button type="submit" class="btn btn-success btn-lg">
-                                        ⚡ Index This Document
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <span class="text-success">
-                                    <strong>✓ This document is already indexed and searchable</strong>
-                                </span>
-                            }
-                        </div>
-                        <form method="post" asp-controller="Document" asp-action="Delete" asp-route-id="@Model.Id" class="d-inline">
-                            <button type="submit" class="btn btn-outline-danger btn-lg" onclick="return confirm('Delete this document permanently?')">
-                                🗑️ Delete Document
-                            </button>
+                <div class="card-footer">
+                    @if (!Model.IsIndexed)
+                    {
+                        <form method="post" asp-controller="Document" asp-action="IndexDocument" asp-route-id="@Model.Id" class="d-inline">
+                            <button type="submit" class="btn btn-success">Index This Document</button>
                         </form>
-                    </div>
+                    }
+                    <form method="post" asp-controller="Document" asp-action="Delete" asp-route-id="@Model.Id" class="d-inline">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Delete?')">Delete</button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -6,13 +6,15 @@ namespace SearchEngine.Services;
 
 public class InvertedIndex : IInvertedIndex
 {
-    private readonly BPlusTree<string, PostingList> _index;
+    private BPlusTree<string, PostingList> _index;
     private readonly Dictionary<Guid, Dictionary<string, List<int>>> _documentPositions;
+    private readonly HashSet<string> _allTerms;
 
     public InvertedIndex()
     {
         _index = new BPlusTree<string, PostingList>(4);
         _documentPositions = new Dictionary<Guid, Dictionary<string, List<int>>>();
+        _allTerms = new HashSet<string>();
     }
 
     public void AddDocument(Document document, List<string> tokens)
@@ -25,6 +27,7 @@ public class InvertedIndex : IInvertedIndex
         for (int position = 0; position < tokens.Count; position++)
         {
             var term = tokens[position];
+            _allTerms.Add(term);
             
             var postingList = _index.Search(term);
             if (postingList == null)
@@ -119,12 +122,33 @@ public class InvertedIndex : IInvertedIndex
 
     public void Clear()
     {
+        _index = new BPlusTree<string, PostingList>(4);
         _documentPositions.Clear();
+        _allTerms.Clear();
     }
 
     public int GetTermCount()
     {
-        return _documentPositions.Values.Sum(d => d.Keys.Count);
+        return _allTerms.Count;
+    }
+    
+    public List<string> GetAllTerms()
+    {
+        return _allTerms.OrderBy(t => t).ToList();
+    }
+    
+    public Dictionary<string, int> GetTermStatistics()
+    {
+        var stats = new Dictionary<string, int>();
+        foreach (var term in _allTerms)
+        {
+            var postingList = _index.Search(term);
+            if (postingList != null)
+            {
+                stats[term] = postingList.DocumentIds.Count;
+            }
+        }
+        return stats;
     }
 }
 

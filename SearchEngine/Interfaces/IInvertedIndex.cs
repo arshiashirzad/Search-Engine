@@ -9,4 +9,6 @@ public interface IInvertedIndex
     HashSet<Guid> SearchPhrase(List<string> terms);
     void Clear();
     int GetTermCount();
+    List<string> GetAllTerms();
+    Dictionary<string, int> GetTermStatistics();
 }

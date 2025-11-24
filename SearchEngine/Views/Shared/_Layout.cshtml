@@ -11,11 +11,9 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="Search" asp-action="Index">
-                    <span style="font-size: 24px;">🔍</span> Search Engine
-                </a>
+                <a class="navbar-brand" asp-controller="Search" asp-action="Index">Search Engine</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -23,19 +21,16 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Search" asp-action="Index">
-                                🔍 Search
-                            </a>
+                            <a class="nav-link text-light" asp-controller="Search" asp-action="Index">Search</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Document" asp-action="Index">
-                                📚 Documents
-                            </a>
+                            <a class="nav-link text-light" asp-controller="Document" asp-action="Index">Documents</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Document" asp-action="Create">
-                                ➕ Add Document
-                            </a>
+                            <a class="nav-link text-light" asp-controller="Document" asp-action="Create">Add</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Search" asp-action="ViewIndex">View Index</a>
                         </li>
                     </ul>
                 </div>

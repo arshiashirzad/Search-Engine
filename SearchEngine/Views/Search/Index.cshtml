@@ -3,211 +3,61 @@
     ViewData["Title"] = "Search Engine";
 }
 
-<style>
-    .search-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 60px 0;
-        margin: -20px -15px 40px -15px;
-        color: white;
-        border-radius: 0 0 30px 30px;
-    }
-    
-    .search-box {
-        background: white;
-        border-radius: 50px;
-        padding: 8px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    }
-    
-    .search-box input {
-        border: none;
-        padding: 15px 25px;
-        font-size: 18px;
-    }
-    
-    .search-box input:focus {
-        outline: none;
-        box-shadow: none;
-    }
-    
-    .search-box button {
-        border-radius: 50px;
-        padding: 12px 35px;
-        font-weight: 600;
-    }
-    
-    .result-card {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin-bottom: 20px;
-        border: 1px solid #e0e0e0;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: inherit;
-        display: block;
-    }
-    
-    .result-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        border-color: #667eea;
-        text-decoration: none;
-    }
-    
-    .result-title {
-        color: #1a73e8;
-        font-size: 22px;
-        font-weight: 600;
-        margin-bottom: 10px;
-    }
-    
-    .result-card:hover .result-title {
-        text-decoration: underline;
-    }
-    
-    .relevance-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 600;
-    }
-    
-    .stats-card {
-        background: white;
-        border-radius: 15px;
-        padding: 15px;
-        text-align: center;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
-    .stats-number {
-        font-size: 32px;
-        font-weight: 700;
-        color: #667eea;
-    }
-    
-    .stats-label {
-        color: #6c757d;
-        font-size: 14px;
-    }
-    
-    .no-results {
-        text-align: center;
-        padding: 60px 20px;
-    }
-    
-    .no-results-icon {
-        font-size: 80px;
-        margin-bottom: 20px;
-    }
-</style>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="text-center mb-4">Search Engine</h1>
+            
+            <form method="get" asp-controller="Search" asp-action="Search" class="mb-4">
+                <div class="input-group input-group-lg">
+                    <input type="text" 
+                           class="form-control" 
+                           name="query" 
+                           placeholder="Search documents..." 
+                           value="@ViewBag.Query"
+                           autofocus>
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </form>
 
-<div class="search-hero">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                <h1 class="text-center mb-4">🔍 Document Search Engine</h1>
-                
-                <form method="get" asp-controller="Search" asp-action="Search">
-                    <div class="search-box">
-                        <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   name="query" 
-                                   placeholder="Search for documents, terms, or phrases..." 
-                                   value="@ViewBag.Query"
-                                   autofocus>
-                            <button class="btn btn-primary" type="submit">Search</button>
-                        </div>
-                    </div>
-                </form>
-                
-                <div class="row mt-4">
-                    <div class="col-md-4">
-                        <div class="stats-card">
-                            <div class="stats-number">@ViewBag.TotalDocuments</div>
-                            <div class="stats-label">Total Documents</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stats-card">
-                            <div class="stats-number">@ViewBag.IndexedTerms</div>
-                            <div class="stats-label">Indexed Terms</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stats-card">
-                            <a href="@Url.Action("Index", "Document")" class="btn btn-light w-100">
-                                📚 Manage Documents
-                            </a>
-                        </div>
-                    </div>
+            <div class="d-flex justify-content-between mb-3">
+                <div>
+                    <small class="text-muted">Documents: @ViewBag.TotalDocuments | Terms: @ViewBag.IndexedTerms</small>
+                </div>
+                <div>
+                    <a href="@Url.Action("ViewIndex")" class="btn btn-sm btn-outline-secondary">View Index</a>
+                    <a href="@Url.Action("Index", "Document")" class="btn btn-sm btn-secondary">Manage Docs</a>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
             @if (Model != null && Model.Any())
             {
-                <div class="alert alert-success" style="border-radius: 15px;">
-                    ✨ Found <strong>@Model.Count()</strong> result(s) for "<strong>@ViewBag.Query</strong>"
+                <div class="alert alert-success mb-3">
+                    Found @Model.Count() result(s) for "<strong>@ViewBag.Query</strong>"
                 </div>
 
                 @foreach (var result in Model)
                 {
-                    <a href="@Url.Action("Details", "Document", new { id = result.Document.Id })" class="result-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h3 class="result-title">
-                                    @if (!string.IsNullOrEmpty(result.Document.FileName))
-                                    {
-                                        <span>📄 </span>
-                                    }
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="@Url.Action("Details", "Document", new { id = result.Document.Id })">
                                     @result.Document.Title
-                                </h3>
-                                <p class="mb-2 text-muted">
-                                    @(result.Document.Content.Length > 250 ? result.Document.Content.Substring(0, 250) + "..." : result.Document.Content)
-                                </p>
-                                <div class="d-flex gap-3">
-                                    <small class="text-muted">
-                                        🕐 @result.Document.DateAdded.ToLocalTime().ToString("MMM dd, yyyy")
-                                    </small>
-                                    @if (!string.IsNullOrEmpty(result.Document.FileName))
-                                    {
-                                        <small class="text-muted">
-                                            📎 @result.Document.FileName
-                                        </small>
-                                    }
-                                </div>
-                            </div>
-                            <div class="relevance-badge">
-                                Score: @result.Relevance.ToString("F1")
+                                </a>
+                            </h5>
+                            <p class="card-text">@(result.Document.Content.Length > 200 ? result.Document.Content.Substring(0, 200) + "..." : result.Document.Content)</p>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">@result.Document.DateAdded.ToLocalTime().ToString("MMM dd, yyyy")</small>
+                                <span class="badge bg-primary">Score: @result.Relevance.ToString("F1")</span>
                             </div>
                         </div>
-                    </a>
+                    </div>
                 }
             }
             else if (!string.IsNullOrEmpty(ViewBag.Query))
             {
-                <div class="no-results">
-                    <div class="no-results-icon">🔍</div>
-                    <h3>No results found</h3>
-                    <p class="text-muted">Try different keywords or check your spelling</p>
-                </div>
-            }
-            else
-            {
-                <div class="no-results">
-                    <div class="no-results-icon">💡</div>
-                    <h3>Start Searching</h3>
-                    <p class="text-muted">Enter a search term above to find documents</p>
+                <div class="alert alert-warning">
+                    No results found for "<strong>@ViewBag.Query</strong>"
                 </div>
             }
         </div>

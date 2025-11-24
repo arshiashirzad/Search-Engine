@@ -1,0 +1,41 @@
+@model List<string>
+@{
+    ViewData["Title"] = "Index Structure";
+}
+
+<div class="container mt-4">
+    <h2>Inverted Index Structure</h2>
+    
+    <div class="alert alert-info">
+        <strong>Total Unique Terms:</strong> @ViewBag.TotalTerms
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>All Indexed Terms (Alphabetical)</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="row">
+                    @foreach (var term in Model)
+                    {
+                        var docCount = ViewBag.Stats[term];
+                        <div class="col-md-3 mb-2">
+                            <span class="badge bg-primary">@term</span>
+                            <small class="text-muted">(@docCount docs)</small>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No terms indexed yet. Add and index some documents first.</p>
+            }
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Index", "Search")" class="btn btn-secondary">Back to Search</a>
+    </div>
+</div>

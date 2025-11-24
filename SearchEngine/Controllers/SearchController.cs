@@ -7,13 +7,16 @@ public class SearchController : Controller
 {
     private readonly ISearchEngineService _searchEngineService;
     private readonly IDocumentRepository _documentRepository;
+    private readonly IInvertedIndex _invertedIndex;
 
     public SearchController(
         ISearchEngineService searchEngineService,
-        IDocumentRepository documentRepository)
+        IDocumentRepository documentRepository,
+        IInvertedIndex invertedIndex)
     {
         _searchEngineService = searchEngineService;
         _documentRepository = documentRepository;
+        _invertedIndex = invertedIndex;
     }
 
     public IActionResult Index()
@@ -37,5 +40,16 @@ public class SearchController : Controller
         ViewBag.IndexedTerms = _searchEngineService.GetIndexedTermCount();
         
         return View("Index", results);
+    }
+    
+    public IActionResult ViewIndex()
+    {
+        var terms = _invertedIndex.GetAllTerms();
+        var stats = _invertedIndex.GetTermStatistics();
+        
+        ViewBag.TotalTerms = terms.Count;
+        ViewBag.Stats = stats;
+        
+        return View(terms);
     }
 }
