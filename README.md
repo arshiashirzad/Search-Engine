@@ -31,20 +31,29 @@ dotnet --version
 ### 2. Clone and Setup Project
 
 ```bash
-cd SearchEngine
+git clone https://github.com/arshiashirzad/Search-Engine.git
+cd "Search Engine/SearchEngine"
 dotnet restore
 ```
 
 ### 3. Install Required Packages
 
+The itext7 package should already be installed. If needed, run:
 ```bash
 dotnet add package itext7 --version 8.0.5
 ```
 
 ### 4. Run the Application
 
+**Important:** Make sure you're in the `SearchEngine` subdirectory:
 ```bash
+cd SearchEngine  # if you're in the root "Search Engine" folder
 dotnet run
+```
+
+Or run directly from root:
+```bash
+dotnet run --project SearchEngine/SearchEngine.csproj
 ```
 
 The application will start at `http://localhost:5004`
