@@ -78,9 +78,13 @@ public class FileStorageService : IFileStorageService
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
                     var page = pdfDocument.GetPage(i);
-                    var strategy = new SimpleTextExtractionStrategy();
+                    // Use LocationTextExtractionStrategy for better text extraction with proper spacing
+                    var strategy = new LocationTextExtractionStrategy();
                     var pageText = PdfTextExtractor.GetTextFromPage(page, strategy);
+                    
+                    // Add space between pages to prevent word merging
                     text.AppendLine(pageText);
+                    text.AppendLine(); // Extra line break between pages
                 }
                 
                 return text.ToString();
