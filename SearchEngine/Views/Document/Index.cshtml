@@ -1,0 +1,80 @@
+@model IEnumerable<SearchEngine.Models.Document>
+@{
+    ViewData["Title"] = "Manage Documents";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Document Management</h2>
+        <div>
+            <a href="@Url.Action("Index", "Search")" class="btn btn-secondary">Back to Search</a>
+            <a href="@Url.Action("Create")" class="btn btn-primary">Add New Document</a>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <form method="post" asp-action="IndexAll" class="d-inline">
+            <button type="submit" class="btn btn-success">Index All Documents</button>
+        </form>
+        <form method="post" asp-action="ClearIndex" class="d-inline">
+            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to clear the index?')">Clear Index</button>
+        </form>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Title</th>
+                        <th>Content Preview</th>
+                        <th>Date Added</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model)
+                    {
+                        <tr>
+                            <td>@doc.Title</td>
+                            <td>@(doc.Content.Length > 100 ? doc.Content.Substring(0, 100) + "..." : doc.Content)</td>
+                            <td>@doc.DateAdded.ToLocalTime().ToString("g")</td>
+                            <td>
+                                @if (doc.IsIndexed)
+                                {
+                                    <span class="badge bg-success">Indexed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Not Indexed</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="@Url.Action("Details", new { id = doc.Id })" class="btn btn-sm btn-info">View</a>
+                                
+                                @if (!doc.IsIndexed)
+                                {
+                                    <form method="post" asp-action="IndexDocument" asp-route-id="@doc.Id" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success">Index</button>
+                                    </form>
+                                }
+                                
+                                <form method="post" asp-action="Delete" asp-route-id="@doc.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No documents available. <a href="@Url.Action("Create")">Add your first document</a>
+        </div>
+    }
+</div>

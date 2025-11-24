@@ -1,0 +1,61 @@
+@model IEnumerable<SearchEngine.Models.SearchResult>
+@{
+    ViewData["Title"] = "Search Engine";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="text-center mb-4">Search Engine</h1>
+            
+            <form method="get" asp-controller="Search" asp-action="Search" class="mb-4">
+                <div class="input-group input-group-lg">
+                    <input type="text" 
+                           class="form-control" 
+                           name="query" 
+                           placeholder="Enter search terms or phrases..." 
+                           value="@ViewBag.Query"
+                           autofocus>
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </form>
+
+            <div class="d-flex justify-content-between mb-3">
+                <small class="text-muted">
+                    Total Documents: @ViewBag.TotalDocuments | Indexed Terms: @ViewBag.IndexedTerms
+                </small>
+                <div>
+                    <a href="@Url.Action("Index", "Document")" class="btn btn-sm btn-secondary">Manage Documents</a>
+                </div>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="alert alert-info">
+                    Found @Model.Count() result(s) for "<strong>@ViewBag.Query</strong>"
+                </div>
+
+                <div class="list-group">
+                    @foreach (var result in Model)
+                    {
+                        <a href="@Url.Action("Details", "Document", new { id = result.Document.Id })" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">@result.Document.Title</h5>
+                                <small class="text-muted">Score: @result.Relevance.ToString("F2")</small>
+                            </div>
+                            <p class="mb-1">@(result.Document.Content.Length > 200 ? result.Document.Content.Substring(0, 200) + "..." : result.Document.Content)</p>
+                            <small class="text-muted">Added: @result.Document.DateAdded.ToLocalTime().ToString("g")</small>
+                        </a>
+                    }
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(ViewBag.Query))
+            {
+                <div class="alert alert-warning">
+                    No results found for "<strong>@ViewBag.Query</strong>"
+                </div>
+            }
+        </div>
+    </div>
+</div>
