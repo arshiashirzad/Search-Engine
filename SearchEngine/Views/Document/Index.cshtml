@@ -3,67 +3,194 @@
     ViewData["Title"] = "Manage Documents";
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Document Management</h2>
-        <div>
-            <a href="@Url.Action("Index", "Search")" class="btn btn-secondary">Back to Search</a>
-            <a href="@Url.Action("Create")" class="btn btn-primary">Add New Document</a>
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 0;
+        margin: -20px -15px 30px -15px;
+        color: white;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .action-buttons {
+        gap: 10px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .doc-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .doc-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .doc-table thead th {
+        border: none;
+        padding: 15px;
+        font-weight: 600;
+    }
+    
+    .doc-table tbody td {
+        padding: 15px;
+        vertical-align: middle;
+    }
+    
+    .doc-table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .doc-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .file-icon {
+        font-size: 20px;
+        margin-right: 8px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .empty-icon {
+        font-size: 100px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="page-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>📚 Document Management</h2>
+            <div class="action-buttons">
+                <a href="@Url.Action("Index", "Search")" class="btn btn-light">
+                    🔍 Back to Search
+                </a>
+                <a href="@Url.Action("Create")" class="btn btn-warning">
+                    ➕ Add Document
+                </a>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="mb-3">
+<div class="container">
+    <div class="mb-4 action-buttons">
         <form method="post" asp-action="IndexAll" class="d-inline">
-            <button type="submit" class="btn btn-success">Index All Documents</button>
+            <button type="submit" class="btn btn-success">
+                ⚡ Index All Documents
+            </button>
         </form>
         <form method="post" asp-action="ClearIndex" class="d-inline">
-            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to clear the index?')">Clear Index</button>
+            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Clear the entire index?')">
+                🗑️ Clear Index
+            </button>
         </form>
+        <div class="ms-auto">
+            <span class="badge bg-primary" style="font-size: 16px; padding: 10px 15px;">
+                Total: @Model.Count() documents
+            </span>
+        </div>
     </div>
 
     @if (Model.Any())
     {
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
+        <div class="doc-table">
+            <table class="table table-hover mb-0">
+                <thead>
                     <tr>
-                        <th>Title</th>
-                        <th>Content Preview</th>
-                        <th>Date Added</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th style="width: 25%">Title</th>
+                        <th style="width: 30%">Content Preview</th>
+                        <th style="width: 15%">File Info</th>
+                        <th style="width: 10%">Date Added</th>
+                        <th style="width: 10%">Status</th>
+                        <th style="width: 10%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var doc in Model)
                     {
                         <tr>
-                            <td>@doc.Title</td>
-                            <td>@(doc.Content.Length > 100 ? doc.Content.Substring(0, 100) + "..." : doc.Content)</td>
-                            <td>@doc.DateAdded.ToLocalTime().ToString("g")</td>
                             <td>
-                                @if (doc.IsIndexed)
+                                <strong>
+                                    @if (!string.IsNullOrEmpty(doc.FileName))
+                                    {
+                                        <span class="file-icon">📄</span>
+                                    }
+                                    @doc.Title
+                                </strong>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    @(doc.Content.Length > 100 ? doc.Content.Substring(0, 100) + "..." : doc.Content)
+                                </small>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(doc.FileName))
                                 {
-                                    <span class="badge bg-success">Indexed</span>
+                                    <small>
+                                        <div><strong>@doc.FileName</strong></div>
+                                        <div class="text-muted">@FormatFileSize(doc.FileSize)</div>
+                                    </small>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Not Indexed</span>
+                                    <small class="text-muted">Manual entry</small>
                                 }
                             </td>
                             <td>
-                                <a href="@Url.Action("Details", new { id = doc.Id })" class="btn btn-sm btn-info">View</a>
-                                
-                                @if (!doc.IsIndexed)
+                                <small>@doc.DateAdded.ToLocalTime().ToString("MMM dd")</small><br/>
+                                <small class="text-muted">@doc.DateAdded.ToLocalTime().ToString("yyyy")</small>
+                            </td>
+                            <td>
+                                @if (doc.IsIndexed)
                                 {
-                                    <form method="post" asp-action="IndexDocument" asp-route-id="@doc.Id" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-success">Index</button>
-                                    </form>
+                                    <span class="status-badge bg-success">✓ Indexed</span>
                                 }
-                                
-                                <form method="post" asp-action="Delete" asp-route-id="@doc.Id" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                                </form>
+                                else
+                                {
+                                    <span class="status-badge bg-secondary">○ Not Indexed</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group-vertical btn-group-sm">
+                                    <a href="@Url.Action("Details", new { id = doc.Id })" class="btn btn-info btn-sm mb-1">
+                                        👁️ View
+                                    </a>
+                                    
+                                    @if (!doc.IsIndexed)
+                                    {
+                                        <form method="post" asp-action="IndexDocument" asp-route-id="@doc.Id" class="mb-1">
+                                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                                ⚡ Index
+                                            </button>
+                                        </form>
+                                    }
+                                    
+                                    <form method="post" asp-action="Delete" asp-route-id="@doc.Id">
+                                        <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('Delete this document?')">
+                                            🗑️ Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -73,8 +200,23 @@
     }
     else
     {
-        <div class="alert alert-info">
-            No documents available. <a href="@Url.Action("Create")">Add your first document</a>
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>No Documents Yet</h3>
+            <p class="text-muted">Start by adding your first document</p>
+            <a href="@Url.Action("Create")" class="btn btn-primary btn-lg mt-3">
+                ➕ Add Your First Document
+            </a>
         </div>
     }
 </div>
+
+@functions {
+    string FormatFileSize(long bytes)
+    {
+        if (bytes == 0) return "0 B";
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int i = (int)Math.Floor(Math.Log(bytes) / Math.Log(1024));
+        return Math.Round(bytes / Math.Pow(1024, i), 2) + " " + sizes[i];
+    }
+}

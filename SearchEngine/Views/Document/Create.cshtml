@@ -3,37 +3,200 @@
     ViewData["Title"] = "Add New Document";
 }
 
+<style>
+    .upload-area {
+        border: 3px dashed #007bff;
+        border-radius: 15px;
+        padding: 60px 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        cursor: pointer;
+        margin-bottom: 30px;
+    }
+    
+    .upload-area:hover {
+        border-color: #0056b3;
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        transform: translateY(-2px);
+    }
+    
+    .upload-area.drag-over {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        transform: scale(1.02);
+    }
+    
+    .upload-icon {
+        font-size: 64px;
+        color: #007bff;
+        margin-bottom: 20px;
+    }
+    
+    .file-info {
+        display: none;
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid #28a745;
+        margin-top: 20px;
+    }
+    
+    .file-info.show {
+        display: block;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        padding: 40px;
+    }
+    
+    .divider {
+        text-align: center;
+        margin: 30px 0;
+        position: relative;
+    }
+    
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #dee2e6;
+    }
+    
+    .divider span {
+        background: white;
+        padding: 0 20px;
+        position: relative;
+        color: #6c757d;
+        font-weight: 500;
+    }
+</style>
+
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h2>Add New Document</h2>
-            
-            <form method="post" asp-action="Create">
-                <div class="mb-3">
-                    <label for="Title" class="form-label">Title</label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="Title" 
-                           name="Title" 
-                           required 
-                           placeholder="Enter document title">
-                </div>
+        <div class="col-md-10">
+            <div class="form-card">
+                <h2 class="mb-4 text-center">📄 Add New Document</h2>
                 
-                <div class="mb-3">
-                    <label for="Content" class="form-label">Content</label>
-                    <textarea class="form-control" 
-                              id="Content" 
-                              name="Content" 
-                              rows="10" 
-                              required 
-                              placeholder="Enter document content"></textarea>
-                </div>
-                
-                <div class="d-flex justify-content-between">
-                    <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Add Document</button>
-                </div>
-            </form>
+                <form method="post" asp-action="Create" enctype="multipart/form-data" id="uploadForm">
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <h4>Drag & Drop Your File Here</h4>
+                        <p class="text-muted">or click to browse</p>
+                        <p class="text-muted small">Supported: .txt, .md, .pdf, .doc</p>
+                        <input type="file" 
+                               id="fileInput" 
+                               name="file" 
+                               accept=".txt,.md,.pdf,.doc,.docx"
+                               style="display: none;">
+                    </div>
+
+                    <div class="file-info" id="fileInfo">
+                        <h5>✅ File Selected</h5>
+                        <p><strong>Name:</strong> <span id="fileName"></span></p>
+                        <p><strong>Size:</strong> <span id="fileSize"></span></p>
+                        <p><strong>Type:</strong> <span id="fileType"></span></p>
+                        <button type="button" class="btn btn-sm btn-danger" id="removeFile">Remove File</button>
+                    </div>
+
+                    <div class="divider">
+                        <span>OR ENTER MANUALLY</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Title" class="form-label">📌 Title</label>
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               id="Title" 
+                               name="Title" 
+                               placeholder="Enter document title">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Content" class="form-label">📝 Content</label>
+                        <textarea class="form-control" 
+                                  id="Content" 
+                                  name="Content" 
+                                  rows="8" 
+                                  placeholder="Enter document content (optional if uploading file)"></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg">Cancel</a>
+                        <button type="submit" class="btn btn-primary btn-lg">Add Document</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const fileType = document.getElementById('fileType');
+    const removeFileBtn = document.getElementById('removeFile');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            displayFileInfo(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            displayFileInfo(e.target.files[0]);
+        }
+    });
+
+    removeFileBtn.addEventListener('click', () => {
+        fileInput.value = '';
+        fileInfo.classList.remove('show');
+    });
+
+    function displayFileInfo(file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatBytes(file.size);
+        fileType.textContent = file.type || 'Unknown';
+        fileInfo.classList.add('show');
+        
+        const titleInput = document.getElementById('Title');
+        if (!titleInput.value) {
+            titleInput.value = file.name.replace(/\.[^/.]+$/, '');
+        }
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+</script>

@@ -10,6 +10,7 @@ builder.Services.AddSingleton<IDocumentRepository, DocumentRepository>();
 builder.Services.AddSingleton<ITokenizer, Tokenizer>();
 builder.Services.AddSingleton<IInvertedIndex, InvertedIndex>();
 builder.Services.AddSingleton<ISearchEngineService, SearchEngineService>();
+builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 
 var app = builder.Build();
 

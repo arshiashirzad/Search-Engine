@@ -7,6 +7,9 @@ public class Document
     public string Content { get; set; } = string.Empty;
     public DateTime DateAdded { get; set; }
     public bool IsIndexed { get; set; }
+    public string? FileName { get; set; }
+    public string? FilePath { get; set; }
+    public long FileSize { get; set; }
 
     public Document()
     {

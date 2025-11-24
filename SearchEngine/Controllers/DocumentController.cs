@@ -8,13 +8,16 @@ public class DocumentController : Controller
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly ISearchEngineService _searchEngineService;
+    private readonly IFileStorageService _fileStorageService;
 
     public DocumentController(
         IDocumentRepository documentRepository,
-        ISearchEngineService searchEngineService)
+        ISearchEngineService searchEngineService,
+        IFileStorageService fileStorageService)
     {
         _documentRepository = documentRepository;
         _searchEngineService = searchEngineService;
+        _fileStorageService = fileStorageService;
     }
 
     public IActionResult Index()
@@ -29,19 +32,39 @@ public class DocumentController : Controller
     }
 
     [HttpPost]
-    public IActionResult Create(Document document)
+    public async Task<IActionResult> Create(Document document, IFormFile? file)
     {
-        if (ModelState.IsValid)
+        if (file != null && file.Length > 0)
         {
             document.Id = Guid.NewGuid();
             document.DateAdded = DateTime.UtcNow;
             document.IsIndexed = false;
+            document.FileName = file.FileName;
+            document.FileSize = file.Length;
+
+            document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
             
-            _documentRepository.Add(document);
+            document.Content = await _fileStorageService.ReadFileContentAsync(document.FilePath);
             
-            return RedirectToAction("Index");
+            if (string.IsNullOrWhiteSpace(document.Title))
+            {
+                document.Title = Path.GetFileNameWithoutExtension(file.FileName);
+            }
         }
-        return View(document);
+        else if (!string.IsNullOrWhiteSpace(document.Content))
+        {
+            document.Id = Guid.NewGuid();
+            document.DateAdded = DateTime.UtcNow;
+            document.IsIndexed = false;
+        }
+        else
+        {
+            ModelState.AddModelError("", "Please either upload a file or enter content manually.");
+            return View(document);
+        }
+
+        _documentRepository.Add(document);
+        return RedirectToAction("Index");
     }
 
     public IActionResult Details(Guid id)
@@ -56,6 +79,11 @@ public class DocumentController : Controller
     [HttpPost]
     public IActionResult Delete(Guid id)
     {
+        var document = _documentRepository.GetById(id);
+        if (document != null && !string.IsNullOrEmpty(document.FilePath))
+        {
+            _fileStorageService.DeleteFile(document.FilePath);
+        }
         _documentRepository.Delete(id);
         return RedirectToAction("Index");
     }
