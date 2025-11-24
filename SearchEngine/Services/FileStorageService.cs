@@ -37,17 +37,24 @@ public class FileStorageService : IFileStorageService
 
         var extension = Path.GetExtension(filePath).ToLower();
 
-        if (extension == ".txt" || extension == ".md")
+        if (extension == ".txt" || extension == ".md" || extension == ".doc" || extension == ".docx")
         {
             return await File.ReadAllTextAsync(filePath);
         }
         else if (extension == ".pdf")
         {
-            return "PDF content extraction not implemented";
+            return "[PDF files are not supported for content extraction. Please upload .txt or .md files instead]";
         }
         else
         {
-            return await File.ReadAllTextAsync(filePath);
+            try
+            {
+                return await File.ReadAllTextAsync(filePath);
+            }
+            catch
+            {
+                return "[Unable to read file content]";
+            }
         }
     }
 

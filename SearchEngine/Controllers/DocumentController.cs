@@ -42,9 +42,35 @@ public class DocumentController : Controller
             document.FileName = file.FileName;
             document.FileSize = file.Length;
 
-            document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
+            var extension = Path.GetExtension(file.FileName).ToLower();
             
-            document.Content = await _fileStorageService.ReadFileContentAsync(document.FilePath);
+            if (extension == ".txt" || extension == ".md")
+            {
+                using (var reader = new StreamReader(file.OpenReadStream()))
+                {
+                    document.Content = await reader.ReadToEndAsync();
+                }
+            }
+            else if (extension == ".pdf")
+            {
+                document.Content = "[PDF files not supported. Please convert to .txt first]";
+            }
+            else
+            {
+                try
+                {
+                    using (var reader = new StreamReader(file.OpenReadStream()))
+                    {
+                        document.Content = await reader.ReadToEndAsync();
+                    }
+                }
+                catch
+                {
+                    document.Content = "[Unable to read file content]";
+                }
+            }
+
+            document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
             
             if (string.IsNullOrWhiteSpace(document.Title))
             {
