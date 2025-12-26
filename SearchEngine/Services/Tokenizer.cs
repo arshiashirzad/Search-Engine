@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using SearchEngine.Interfaces;
+using SearchEngine.TextProcessing;
 
 namespace SearchEngine.Services;
 
@@ -8,9 +9,12 @@ public class Tokenizer : ITokenizer
 {
     private readonly HashSet<string> _stopWords;
     private readonly HashSet<string> _stopNumbers;
+    private readonly PorterStemmer _stemmer;
 
     public Tokenizer()
     {
+        _stemmer = new PorterStemmer();
+
         _stopWords = new HashSet<string>
         {
             "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
@@ -24,7 +28,6 @@ public class Tokenizer : ITokenizer
             "only", "own", "same", "so", "than", "too", "very", "can", "just"
         };
 
-        // Filter out meaningless standalone numbers (0-100)
         _stopNumbers = new HashSet<string>();
         for (int i = 0; i <= 100; i++)
         {
@@ -38,9 +41,7 @@ public class Tokenizer : ITokenizer
             return string.Empty;
 
         text = text.ToLowerInvariant();
-        
-        // Keep alphanumeric, hyphens, underscores, and whitespace
-        // This preserves: COVID-19, python_3, data-science, etc.
+
         text = Regex.Replace(text, @"[^\w\s\-]", " ");
         text = Regex.Replace(text, @"\s+", " ");
         return text.Trim();
@@ -61,34 +62,25 @@ public class Tokenizer : ITokenizer
 
     private bool IsStopToken(string token)
     {
-        // Minimum length requirement
         if (token.Length < 2)
             return true;
 
-        // Maximum length (reject garbage merged words like 'whichoutperformedmostoftheexistingworkapartfromglobaljittering')
         if (token.Length > 30)
             return true;
 
-        // Filter stop words
         if (_stopWords.Contains(token))
             return true;
 
-        // REJECT all pure numbers (including ranges like 0-4, 10-20)
         if (Regex.IsMatch(token, @"^[\d\-]+$"))
-            return true; // Filters: 0, 10, 100, 0-4, 10-20, etc.
+            return true;
 
-        // REJECT tokens that are mostly numbers (95%+ digits)
         var digitCount = token.Count(char.IsDigit);
         if (digitCount > 0 && (double)digitCount / token.Length > 0.95)
             return true;
 
-        // Keep meaningful alphanumeric terms (must have at least 2 letters)
         var letterCount = token.Count(char.IsLetter);
         if (letterCount < 2)
-            return true; // Filters: 1a, 2b, 3-, etc.
-
-        // Keep technical terms with numbers (covid-19, h2o, ipv6, python3)
-        // These pass because they have 2+ letters and aren't pure numbers
+            return true;
 
         return false;
     }
@@ -96,17 +88,30 @@ public class Tokenizer : ITokenizer
     public List<string> GenerateKGrams(string term, int k = 3)
     {
         var kgrams = new List<string>();
-        
+
         if (string.IsNullOrEmpty(term) || term.Length < k)
             return kgrams;
 
         var paddedTerm = $"${term}$";
-        
+
         for (int i = 0; i <= paddedTerm.Length - k; i++)
         {
             kgrams.Add(paddedTerm.Substring(i, k));
         }
 
         return kgrams;
+    }
+
+    public string Stem(string word)
+    {
+        if (string.IsNullOrWhiteSpace(word))
+            return word;
+        return _stemmer.Stem(word.ToLowerInvariant());
+    }
+
+    public List<string> TokenizeWithStemming(string text)
+    {
+        var tokens = Tokenize(text);
+        return tokens.Select(t => _stemmer.Stem(t)).ToList();
     }
 }

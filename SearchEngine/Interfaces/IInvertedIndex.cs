@@ -1,3 +1,4 @@
+using SearchEngine.DataStructures;
 using SearchEngine.Models;
 
 namespace SearchEngine.Interfaces;
@@ -11,4 +12,5 @@ public interface IInvertedIndex
     int GetTermCount();
     List<string> GetAllTerms();
     Dictionary<string, int> GetTermStatistics();
+    TreeVisualization GetTreeVisualization();
 }

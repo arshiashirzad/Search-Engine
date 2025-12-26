@@ -217,4 +217,74 @@ public class BPlusTree<TKey, TValue> where TKey : IComparable<TKey>
         var internalNode = (BPlusTreeInternalNode<TKey, TValue>)node;
         return FindFirstLeaf(internalNode.Children[0]);
     }
+
+    public TreeVisualization GetTreeVisualization()
+    {
+        var visualization = new TreeVisualization
+        {
+            Order = _order,
+            Height = GetHeight(_root),
+            TotalKeys = CountKeys(_root)
+        };
+
+        visualization.Root = BuildVisualizationNode(_root, 0);
+        return visualization;
+    }
+
+    private TreeNodeVisualization BuildVisualizationNode(BPlusTreeNode<TKey, TValue> node, int level)
+    {
+        var vizNode = new TreeNodeVisualization
+        {
+            Level = level,
+            IsLeaf = node.IsLeaf,
+            Keys = node.Keys.Select(k => k?.ToString() ?? "").ToList()
+        };
+
+        if (!node.IsLeaf)
+        {
+            var internalNode = (BPlusTreeInternalNode<TKey, TValue>)node;
+            foreach (var child in internalNode.Children)
+            {
+                vizNode.Children.Add(BuildVisualizationNode(child, level + 1));
+            }
+        }
+
+        return vizNode;
+    }
+
+    private int GetHeight(BPlusTreeNode<TKey, TValue> node)
+    {
+        if (node.IsLeaf) return 1;
+        var internalNode = (BPlusTreeInternalNode<TKey, TValue>)node;
+        return 1 + GetHeight(internalNode.Children[0]);
+    }
+
+    private int CountKeys(BPlusTreeNode<TKey, TValue> node)
+    {
+        if (node.IsLeaf) return node.Keys.Count;
+
+        var internalNode = (BPlusTreeInternalNode<TKey, TValue>)node;
+        int count = node.Keys.Count;
+        foreach (var child in internalNode.Children)
+        {
+            count += CountKeys(child);
+        }
+        return count;
+    }
+}
+
+public class TreeVisualization
+{
+    public int Order { get; set; }
+    public int Height { get; set; }
+    public int TotalKeys { get; set; }
+    public TreeNodeVisualization Root { get; set; } = new();
+}
+
+public class TreeNodeVisualization
+{
+    public int Level { get; set; }
+    public bool IsLeaf { get; set; }
+    public List<string> Keys { get; set; } = new();
+    public List<TreeNodeVisualization> Children { get; set; } = new();
 }

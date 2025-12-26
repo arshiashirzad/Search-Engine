@@ -1,65 +1,120 @@
 @model IEnumerable<SearchEngine.Models.SearchResult>
 @{
-    ViewData["Title"] = "Search Engine";
+    ViewData["Title"] = "Search";
 }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h1 class="text-center mb-4">Search Engine</h1>
-            
-            <form method="get" asp-controller="Search" asp-action="Search" class="mb-4">
-                <div class="input-group input-group-lg">
-                    <input type="text" 
-                           class="form-control" 
-                           name="query" 
-                           placeholder="Search documents..." 
-                           value="@ViewBag.Query"
-                           autofocus>
-                    <button class="btn btn-primary" type="submit">Search</button>
-                </div>
-            </form>
+<div class="hero">
+    <h1 class="hero-title">Search Engine</h1>
 
-            <div class="d-flex justify-content-between mb-3">
-                <div>
-                    <small class="text-muted">Documents: @ViewBag.TotalDocuments | Terms: @ViewBag.IndexedTerms</small>
-                </div>
-                <div>
-                    <a href="@Url.Action("ViewIndex")" class="btn btn-sm btn-outline-secondary">View Index</a>
-                    <a href="@Url.Action("Index", "Document")" class="btn btn-sm btn-secondary">Manage Docs</a>
-                </div>
+    <div class="search-container">
+        <form method="get" asp-controller="Search" asp-action="Search">
+            <div class="search-box">
+                <svg class="search-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                </svg>
+                <input type="text"
+                       class="search-input"
+                       name="query"
+                       placeholder="Search documents..."
+                       value="@ViewBag.Query"
+                       autocomplete="off"
+                       autofocus>
+                <button class="search-btn" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-bar" style="max-width: 480px; margin: 2rem auto 0;">
+        <div class="stat-item">
+            <span class="stat-value">@ViewBag.TotalDocuments</span>
+            <span class="stat-label">Documents</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">@ViewBag.IndexedTerms</span>
+            <span class="stat-label">Terms</span>
+        </div>
+    </div>
+</div>
+
+<div class="main-container">
+    @if (Model != null && Model.Any())
+    {
+        <div class="animate-fade-in">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                <p style="margin: 0; color: var(--gray-600);">
+                    Found <strong style="color: var(--gray-900);">@Model.Count()</strong> result(s) for
+                    <span style="color: var(--primary); font-weight: 600;">"@ViewBag.Query"</span>
+                </p>
+                <a href="@Url.Action("AdvancedSearch", new { query = ViewBag.Query })" class="btn-modern btn-secondary-modern">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    Advanced Search
+                </a>
             </div>
 
-            @if (Model != null && Model.Any())
+            @foreach (var result in Model)
             {
-                <div class="alert alert-success mb-3">
-                    Found @Model.Count() result(s) for "<strong>@ViewBag.Query</strong>"
-                </div>
-
-                @foreach (var result in Model)
-                {
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <a href="@Url.Action("Details", "Document", new { id = result.Document.Id })">
-                                    @result.Document.Title
-                                </a>
-                            </h5>
-                            <p class="card-text">@(result.Document.Content.Length > 200 ? result.Document.Content.Substring(0, 200) + "..." : result.Document.Content)</p>
-                            <div class="d-flex justify-content-between">
-                                <small class="text-muted">@result.Document.DateAdded.ToLocalTime().ToString("MMM dd, yyyy")</small>
-                                <span class="badge bg-primary">Score: @result.Relevance.ToString("F1")</span>
-                            </div>
-                        </div>
+                <div class="result-card">
+                    <a href="@Url.Action("Details", "Document", new { id = result.Document.Id })" class="result-title">
+                        @result.Document.Title
+                    </a>
+                    <p class="result-snippet">
+                        @(result.Document.Content.Length > 220 ? result.Document.Content.Substring(0, 220) + "..." : result.Document.Content)
+                    </p>
+                    <div class="result-meta">
+                        <span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -2px;">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            @result.Document.DateAdded.ToLocalTime().ToString("MMM dd, yyyy")
+                        </span>
+                        <span class="result-score">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                            @result.Relevance.ToString("F2")
+                        </span>
                     </div>
-                }
-            }
-            else if (!string.IsNullOrEmpty(ViewBag.Query))
-            {
-                <div class="alert alert-warning">
-                    No results found for "<strong>@ViewBag.Query</strong>"
                 </div>
             }
         </div>
-    </div>
+    }
+    else if (!string.IsNullOrEmpty(ViewBag.Query))
+    {
+        <div class="animate-fade-in">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">No results found</h3>
+                <p class="empty-state-text">No documents match "<strong>@ViewBag.Query</strong>"</p>
+
+                @if (!string.IsNullOrEmpty(ViewBag.SpellingSuggestion))
+                {
+                    <div class="alert-modern alert-info" style="max-width: 400px; margin: 0 auto;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <div>
+                            Did you mean:
+                            <a href="@Url.Action("Search", new { query = ViewBag.SpellingSuggestion })" style="font-weight: 600; color: inherit;">
+                                @ViewBag.SpellingSuggestion
+                            </a>?
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>

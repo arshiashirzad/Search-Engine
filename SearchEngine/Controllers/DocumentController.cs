@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SearchEngine.Interfaces;
 using SearchEngine.Models;
+using SearchEngine.Services;
 
 namespace SearchEngine.Controllers;
 
@@ -8,15 +9,18 @@ public class DocumentController : Controller
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly ISearchEngineService _searchEngineService;
+    private readonly IAdvancedSearchEngine _advancedSearchEngine;
     private readonly IFileStorageService _fileStorageService;
 
     public DocumentController(
         IDocumentRepository documentRepository,
         ISearchEngineService searchEngineService,
+        IAdvancedSearchEngine advancedSearchEngine,
         IFileStorageService fileStorageService)
     {
         _documentRepository = documentRepository;
         _searchEngineService = searchEngineService;
+        _advancedSearchEngine = advancedSearchEngine;
         _fileStorageService = fileStorageService;
     }
 
@@ -43,10 +47,9 @@ public class DocumentController : Controller
             document.FileSize = file.Length;
 
             var extension = Path.GetExtension(file.FileName).ToLower();
-            
+
             if (extension == ".txt" || extension == ".md")
             {
-                // Read text files directly from upload stream
                 using (var reader = new StreamReader(file.OpenReadStream()))
                 {
                     document.Content = await reader.ReadToEndAsync();
@@ -55,13 +58,11 @@ public class DocumentController : Controller
             }
             else if (extension == ".pdf")
             {
-                // For PDFs, save file first then extract text
                 document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
                 document.Content = await _fileStorageService.ReadFileContentAsync(document.FilePath);
             }
             else
             {
-                // Try to read other file types
                 try
                 {
                     using (var reader = new StreamReader(file.OpenReadStream()))
@@ -76,7 +77,7 @@ public class DocumentController : Controller
                     document.FilePath = await _fileStorageService.SaveFileAsync(file, document.Id);
                 }
             }
-            
+
             if (string.IsNullOrWhiteSpace(document.Title))
             {
                 document.Title = Path.GetFileNameWithoutExtension(file.FileName);
@@ -103,7 +104,7 @@ public class DocumentController : Controller
         var document = _documentRepository.GetById(id);
         if (document == null)
             return NotFound();
-        
+
         return View(document);
     }
 
@@ -123,6 +124,8 @@ public class DocumentController : Controller
     public IActionResult IndexDocument(Guid id)
     {
         _searchEngineService.IndexDocument(id);
+        _advancedSearchEngine.RebuildSpellCheckIndex();
+        _advancedSearchEngine.InvalidateCache();
         return RedirectToAction("Index");
     }
 
@@ -130,6 +133,8 @@ public class DocumentController : Controller
     public IActionResult IndexAll()
     {
         _searchEngineService.IndexAllDocuments();
+        _advancedSearchEngine.RebuildSpellCheckIndex();
+        _advancedSearchEngine.InvalidateCache();
         return RedirectToAction("Index");
     }
 

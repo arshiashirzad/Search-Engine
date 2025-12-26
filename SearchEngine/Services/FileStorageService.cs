@@ -12,7 +12,7 @@ public class FileStorageService : IFileStorageService
     public FileStorageService(IWebHostEnvironment environment)
     {
         _storagePath = Path.Combine(environment.ContentRootPath, "UploadedFiles");
-        
+
         if (!Directory.Exists(_storagePath))
         {
             Directory.CreateDirectory(_storagePath);
@@ -50,7 +50,6 @@ public class FileStorageService : IFileStorageService
         }
         else if (extension == ".doc" || extension == ".docx")
         {
-            // Word documents require DocumentFormat.OpenXml library
             return "[Word documents (.doc/.docx) are not yet supported. Please convert to .txt or .pdf]";
         }
         else
@@ -74,19 +73,17 @@ public class FileStorageService : IFileStorageService
             using (var pdfDocument = new PdfDocument(pdfReader))
             {
                 var text = new System.Text.StringBuilder();
-                
+
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
                     var page = pdfDocument.GetPage(i);
-                    // Use LocationTextExtractionStrategy for better text extraction with proper spacing
                     var strategy = new LocationTextExtractionStrategy();
                     var pageText = PdfTextExtractor.GetTextFromPage(page, strategy);
-                    
-                    // Add space between pages to prevent word merging
+
                     text.AppendLine(pageText);
-                    text.AppendLine(); // Extra line break between pages
+                    text.AppendLine();
                 }
-                
+
                 return text.ToString();
             }
         }

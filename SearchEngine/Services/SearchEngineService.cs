@@ -25,15 +25,15 @@ public class SearchEngineService : ISearchEngineService
         if (document == null)
             return;
 
-        var titleTokens = _tokenizer.Tokenize(document.Title);
-        var contentTokens = _tokenizer.Tokenize(document.Content);
-        
+        var titleTokens = _tokenizer.TokenizeWithStemming(document.Title);
+        var contentTokens = _tokenizer.TokenizeWithStemming(document.Content);
+
         var allTokens = new List<string>();
         allTokens.AddRange(titleTokens);
         allTokens.AddRange(contentTokens);
 
         _invertedIndex.AddDocument(document, allTokens);
-        
+
         document.IsIndexed = true;
         _documentRepository.Update(document);
     }
@@ -42,7 +42,7 @@ public class SearchEngineService : ISearchEngineService
     {
         var documents = _documentRepository.GetAll();
         _invertedIndex.Clear();
-        
+
         foreach (var document in documents)
         {
             IndexDocument(document.Id);
@@ -54,7 +54,7 @@ public class SearchEngineService : ISearchEngineService
         if (string.IsNullOrWhiteSpace(query))
             return new List<SearchResult>();
 
-        var queryTokens = _tokenizer.Tokenize(query);
+        var queryTokens = _tokenizer.TokenizeWithStemming(query);
         if (queryTokens.Count == 0)
             return new List<SearchResult>();
 
@@ -67,7 +67,7 @@ public class SearchEngineService : ISearchEngineService
         else
         {
             matchingDocIds = _invertedIndex.SearchPhrase(queryTokens);
-            
+
             if (matchingDocIds.Count == 0)
             {
                 matchingDocIds = new HashSet<Guid>();
@@ -99,16 +99,16 @@ public class SearchEngineService : ISearchEngineService
 
     private double CalculateRelevance(Document document, List<string> queryTokens)
     {
-        var titleTokens = _tokenizer.Tokenize(document.Title);
-        var contentTokens = _tokenizer.Tokenize(document.Content);
-        
+        var titleTokens = _tokenizer.TokenizeWithStemming(document.Title);
+        var contentTokens = _tokenizer.TokenizeWithStemming(document.Content);
+
         double score = 0;
 
         foreach (var queryToken in queryTokens)
         {
             var titleMatches = titleTokens.Count(t => t == queryToken);
             var contentMatches = contentTokens.Count(t => t == queryToken);
-            
+
             score += titleMatches * 2.0;
             score += contentMatches * 1.0;
         }
@@ -119,7 +119,7 @@ public class SearchEngineService : ISearchEngineService
     public void ClearIndex()
     {
         _invertedIndex.Clear();
-        
+
         var documents = _documentRepository.GetAll();
         foreach (var document in documents)
         {

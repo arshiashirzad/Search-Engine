@@ -1,90 +1,128 @@
 @model IEnumerable<SearchEngine.Models.Document>
 @{
-    ViewData["Title"] = "Manage Documents";
+    ViewData["Title"] = "Documents";
+    var indexedCount = Model.Count(d => d.IsIndexed);
+    var totalCount = Model.Count();
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Documents</h2>
+<div class="main-container">
+    <div class="page-header">
         <div>
-            <a href="@Url.Action("Index", "Search")" class="btn btn-secondary">Back to Search</a>
-            <a href="@Url.Action("Create")" class="btn btn-primary">Add Document</a>
+            <h1 class="page-title">Documents</h1>
+            <p class="page-subtitle">@indexedCount of @totalCount documents indexed</p>
         </div>
-    </div>
-
-    <div class="mb-3">
-        <form method="post" asp-action="IndexAll" class="d-inline">
-            <button type="submit" class="btn btn-success">Index All</button>
-        </form>
-        <form method="post" asp-action="ClearIndex" class="d-inline">
-            <button type="submit" class="btn btn-warning" onclick="return confirm('Clear index?')">Clear Index</button>
-        </form>
-        <span class="badge bg-info ms-2">Total: @Model.Count()</span>
+        <div class="page-actions">
+            <form method="post" asp-action="ClearIndex" style="display: inline;">
+                <button type="submit" class="btn-modern btn-secondary-modern" onclick="return confirm('Clear all indexed data?')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    </svg>
+                    Clear Index
+                </button>
+            </form>
+            <form method="post" asp-action="IndexAll" style="display: inline;">
+                <button type="submit" class="btn-modern btn-success-modern">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Index All
+                </button>
+            </form>
+            <a href="@Url.Action("Create")" class="btn-modern btn-primary-modern">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Document
+            </a>
+        </div>
     </div>
 
     @if (Model.Any())
     {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Content</th>
-                    <th>File</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var doc in Model)
-                {
-                    <tr>
-                        <td><strong>@doc.Title</strong></td>
-                        <td><small>@(doc.Content.Length > 80 ? doc.Content.Substring(0, 80) + "..." : doc.Content)</small></td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(doc.FileName))
-                            {
-                                <small>@doc.FileName</small>
-                            }
-                            else
-                            {
-                                <small class="text-muted">-</small>
-                            }
-                        </td>
-                        <td><small>@doc.DateAdded.ToLocalTime().ToString("MM/dd/yy")</small></td>
-                        <td>
-                            @if (doc.IsIndexed)
-                            {
-                                <span class="badge bg-success">Indexed</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Not Indexed</span>
-                            }
-                        </td>
-                        <td>
-                            <a href="@Url.Action("Details", new { id = doc.Id })" class="btn btn-sm btn-info">View</a>
-                            
-                            @if (!doc.IsIndexed)
-                            {
-                                <form method="post" asp-action="IndexDocument" asp-route-id="@doc.Id" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-success">Index</button>
-                                </form>
-                            }
-                            
-                            <form method="post" asp-action="Delete" asp-route-id="@doc.Id" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</button>
+        <div class="doc-grid">
+            @foreach (var doc in Model.OrderByDescending(d => d.DateAdded))
+            {
+                <div class="doc-card @(doc.IsIndexed ? "indexed" : "not-indexed") animate-fade-in">
+                    <div class="doc-card-header">
+                        <span class="badge-modern @(doc.IsIndexed ? "badge-success" : "badge-gray")">
+                            @(doc.IsIndexed ? "Indexed" : "Not Indexed")
+                        </span>
+                        <span style="font-size: 0.75rem; color: var(--gray-500);">
+                            @doc.DateAdded.ToLocalTime().ToString("MMM dd, yyyy")
+                        </span>
+                    </div>
+                    <div class="doc-card-body">
+                        <h3 class="doc-card-title" title="@doc.Title">@doc.Title</h3>
+                        @if (!string.IsNullOrEmpty(doc.FileName))
+                        {
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <span class="badge-modern badge-primary" style="font-size: 0.625rem;">
+                                    @System.IO.Path.GetExtension(doc.FileName).ToUpper().TrimStart('.')
+                                </span>
+                                <span style="font-size: 0.75rem; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @doc.FileName
+                                </span>
+                            </div>
+                        }
+                        <p class="doc-card-content">
+                            @(doc.Content.Length > 150 ? doc.Content.Substring(0, 150) + "..." : doc.Content)
+                        </p>
+                    </div>
+                    <div class="doc-card-footer">
+                        <a href="@Url.Action("Details", new { id = doc.Id })" class="btn-modern btn-secondary-modern">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            View
+                        </a>
+                        @if (!doc.IsIndexed)
+                        {
+                            <form method="post" asp-action="IndexDocument" asp-route-id="@doc.Id" style="flex: 1;">
+                                <button type="submit" class="btn-modern btn-success-modern" style="width: 100%;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Index
+                                </button>
                             </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        }
+                        <form method="post" asp-action="Delete" asp-route-id="@doc.Id">
+                            <button type="submit" class="btn-modern btn-danger-modern" onclick="return confirm('Delete this document?')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18"></path>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
     }
     else
     {
-        <div class="alert alert-info">
-            No documents. <a href="@Url.Action("Create")">Add your first document</a>
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <h3 class="empty-state-title">No Documents Yet</h3>
+            <p class="empty-state-text">Upload text files or PDFs to start indexing and searching your content.</p>
+            <a href="@Url.Action("Create")" class="btn-modern btn-primary-modern">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Your First Document
+            </a>
         </div>
     }
 </div>
