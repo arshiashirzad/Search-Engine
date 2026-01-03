@@ -57,13 +57,3 @@ dotnet run --project SearchEngine/SearchEngine.csproj
 ```
 
 The application will start at `http://localhost:5004`
-
-## Features
-
-- **B+ Tree Data Structure**: Efficient indexing using custom B+ tree implementation
-- **PDF Support**: Extract and index text from PDF files using iText7
-- **Inverted Index**: Fast document retrieval with term-to-document mapping
-- **Intelligent Tokenization**: Smart filtering of numbers, stop words, and garbage terms
-- **Phrase Search**: Support for multi-term phrase queries
-- **Document Management**: Upload .txt, .md, .pdf files with CRUD operations
-- **Clean Architecture**: Follows SOLID principles with proper separation of concerns
